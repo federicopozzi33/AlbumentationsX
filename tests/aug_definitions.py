@@ -8,6 +8,7 @@ transforms2metadata_key = {
     A.FDA: "fda_metadata",
     A.HistogramMatching: "hm_metadata",
     A.PixelDistributionAdaptation: "pda_metadata",
+    A.Mosaic: "mosaic_metadata",
 }
 
 AUGMENTATION_CLS_PARAMS = [
@@ -440,10 +441,15 @@ AUGMENTATION_CLS_PARAMS = [
     [A.AtLeastOneBBoxRandomCrop, {"height": 80, "width": 80, "erosion_factor": 0.2}],
     [A.ConstrainedCoarseDropout, {"num_holes_range": (1, 3), "hole_height_range": (0.1, 0.2), "hole_width_range": (0.1, 0.2), "fill": 0, "fill_mask": 0, "mask_indices": [1]}],
     [A.RandomSizedBBoxSafeCrop, {"height": 80, "width": 80, "erosion_rate": 0.2}],
+    [A.BBoxSafeRandomCrop, {"erosion_rate": 0.2}],
     [A.HEStain, [
         {"method": "vahadane", "intensity_scale_range": (0.5, 1.5), "intensity_shift_range": (-0.1, 0.1), "augment_background": False},
         {"method": "macenko", "intensity_scale_range": (0.5, 1.5), "intensity_shift_range": (-0.1, 0.1), "augment_background": True},
         {"method": "random_preset",
          "intensity_scale_range": (0.5, 1.5), "intensity_shift_range": (-0.1, 0.1), "augment_background": True},
     ]],
+    [A.FDA, {"beta_limit": (0.1, 0.3), "metadata_key": "fda_metadata"}],
+    [A.HistogramMatching, {"blend_ratio": (0.5, 1.0), "metadata_key": "hm_metadata"}],
+    [A.PixelDistributionAdaptation, {"blend_ratio": (0.25, 1.0), "transform_type": "pca", "metadata_key": "pda_metadata"}],
+    [A.Mosaic, {"grid_yx": (2, 2), "target_size": (256, 256), "cell_shape": (128, 128), "metadata_key": "mosaic_metadata"}],
 ]
