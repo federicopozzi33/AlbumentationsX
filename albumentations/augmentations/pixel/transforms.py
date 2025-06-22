@@ -235,16 +235,6 @@ class Normalize(ImageOnlyTransform):
         self.normalization = normalization
 
     def apply(self, img: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply normalization to the input image.
-
-        Args:
-            img (np.ndarray): The input image to normalize.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The normalized image.
-
-        """
         if self.normalization == "standard":
             return normalize(
                 img,
@@ -254,19 +244,6 @@ class Normalize(ImageOnlyTransform):
         return normalize_per_image(img, self.normalization)
 
     def apply_to_images(self, images: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply normalization to a batch of images.
-
-        Args:
-            images (np.ndarray): Batch of images to normalize with shape:
-                - (N, H, W) for grayscale images
-                - (N, H, W, C) for multi-channel images
-                where N is the batch size
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Normalized batch of images.
-
-        """
         # For batch of images: spatial axes are (1, 2) - H and W dimensions
         return fpixel.normalize_dispatch(
             images,
@@ -276,36 +253,7 @@ class Normalize(ImageOnlyTransform):
             denominator=self.denominator,
         )
 
-    def apply_to_volume(self, volume: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply normalization to a 3D volume.
-
-        Args:
-            volume (np.ndarray): 3D volume to normalize with shape:
-                - (D, H, W) for grayscale volumes
-                - (D, H, W, C) for multi-channel volumes
-                where D is the depth
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Normalized 3D volume.
-
-        """
-        return self.apply_to_images(volume, **params)
-
     def apply_to_volumes(self, volumes: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply normalization to a batch of 3D volumes.
-
-        Args:
-            volumes (np.ndarray): Batch of 3D volumes to normalize with shape:
-                - (N, D, H, W) for grayscale volumes
-                - (N, D, H, W, C) for multi-channel volumes
-                where N is the batch size, D is the depth
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Normalized batch of 3D volumes.
-
-        """
         # For batch of volumes: spatial axes are (2, 3) - H and W dimensions
         return fpixel.normalize_dispatch(
             volumes,
@@ -397,29 +345,9 @@ class ImageCompression(ImageOnlyTransform):
         image_type: Literal[".jpg", ".webp"],
         **params: Any,
     ) -> np.ndarray:
-        """Apply compression to the input image.
-
-        Args:
-            img (np.ndarray): The input image to be compressed.
-            quality (int): Compression quality level (1-100).
-            image_type (Literal[".jpg", ".webp"]): File extension indicating compression format.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The compressed image.
-
-        """
         return fpixel.image_compression(img, quality, image_type)
 
     def get_params(self) -> dict[str, int | str]:
-        """Generate random parameters for the transform.
-
-        Returns:
-            dict[str, int | str]: Dictionary with the following keys:
-                - "quality" (int): Random quality value within the specified range.
-                - "image_type" (str): File extension for the chosen compression type.
-
-        """
         image_type = ".jpg" if self.compression_type == "jpeg" else ".webp"
 
         return {
@@ -535,19 +463,6 @@ class RandomSnow(ImageOnlyTransform):
         sparkle_mask: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the snow effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the snow effect to.
-            snow_point (float): The snow point threshold.
-            snow_texture (np.ndarray): The snow texture overlay.
-            sparkle_mask (np.ndarray): The sparkle mask for the snow effect.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied snow effect.
-
-        """
         non_rgb_error(img)
 
         if self.method == "bleach":
@@ -568,19 +483,6 @@ class RandomSnow(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, np.ndarray | None]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, np.ndarray | None]: Dictionary with the following keys:
-                - "snow_point" (np.ndarray | None): The snow point threshold.
-                - "snow_texture" (np.ndarray | None): The snow texture overlay.
-                - "sparkle_mask" (np.ndarray | None): The sparkle mask for the snow effect.
-
-        """
         image_shape = params["shape"][:2]
         result = {
             "snow_point": self.py_random.uniform(*self.snow_point_range),
@@ -722,17 +624,6 @@ class RandomGravel(ImageOnlyTransform):
         gravels_infos: list[Any],
         **params: Any,
     ) -> np.ndarray:
-        """Apply the gravel effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the gravel effect to.
-            gravels_infos (list[Any]): Information about the gravel particles.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied gravel effect.
-
-        """
         return fpixel.add_gravel(img, gravels_infos)
 
     def get_params_dependent_on_data(
@@ -740,17 +631,6 @@ class RandomGravel(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, np.ndarray]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, np.ndarray]: Dictionary with the following keys:
-                - "gravels_infos" (np.ndarray): Information about the gravel particles.
-
-        """
         height, width = params["shape"][:2]
 
         # Calculate ROI in pixels
@@ -910,19 +790,6 @@ class RandomRain(ImageOnlyTransform):
         rain_drops: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the rain effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the rain effect to.
-            slant (float): The slant angle of the rain.
-            drop_length (int): The length of the rain drops.
-            rain_drops (np.ndarray): The coordinates of the rain drops.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied rain effect.
-
-        """
         non_rgb_error(img)
 
         return fpixel.add_rain(
@@ -941,19 +808,6 @@ class RandomRain(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following keys:
-                - "drop_length" (int): The length of the rain drops.
-                - "slant" (float): The slant angle of the rain.
-                - "rain_drops" (np.ndarray): The coordinates of the rain drops.
-
-        """
         height, width = params["shape"][:2]
 
         # Simpler calculations, directly following Kornia
@@ -1082,19 +936,6 @@ class RandomFog(ImageOnlyTransform):
         intensity: float,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the fog effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the fog effect to.
-            particle_positions (list[tuple[int, int]]): The coordinates of the fog particles.
-            radiuses (list[int]): The radii of the fog particles.
-            intensity (float): The intensity of the fog.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied fog effect.
-
-        """
         non_rgb_error(img)
         return fpixel.add_fog(
             img,
@@ -1109,19 +950,6 @@ class RandomFog(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following keys:
-                - "intensity" (float): The intensity of the fog.
-                - "particle_positions" (list[tuple[int, int]]): The coordinates of the fog particles.
-                - "radiuses" (list[int]): The radii of the fog particles.
-
-        """
         # Select a random fog intensity within the specified range
         intensity = self.py_random.uniform(*self.fog_coef_range)
 
@@ -1367,18 +1195,6 @@ class RandomSunFlare(ImageOnlyTransform):
         circles: list[Any],
         **params: Any,
     ) -> np.ndarray:
-        """Apply the sun flare effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the sun flare effect to.
-            flare_center (tuple[float, float]): The center of the sun.
-            circles (list[Any]): The circles to apply the sun flare effect to.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied sun flare effect.
-
-        """
         non_rgb_error(img)
         if self.method == "overlay":
             return fpixel.add_sun_flare_overlay(
@@ -1404,18 +1220,6 @@ class RandomSunFlare(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following keys:
-                - "circles" (list[Any]): The circles to apply the sun flare effect to.
-                - "flare_center" (tuple[float, float]): The center of the sun.
-
-        """
         height, width = params["shape"][:2]
         diagonal = math.sqrt(height**2 + width**2)
 
@@ -1588,18 +1392,6 @@ class RandomShadow(ImageOnlyTransform):
         intensities: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the shadow effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the shadow effect to.
-            vertices_list (list[np.ndarray]): The vertices of the shadow polygons.
-            intensities (np.ndarray): The intensities of the shadows.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied shadow effect.
-
-        """
         return fpixel.add_shadow(img, vertices_list, intensities)
 
     def get_params_dependent_on_data(
@@ -1607,18 +1399,6 @@ class RandomShadow(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, list[np.ndarray]]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, list[np.ndarray]]: Dictionary with the following keys:
-                - "vertices_list" (list[np.ndarray]): The vertices of the shadow polygons.
-                - "intensities" (np.ndarray): The intensities of the shadows.
-
-        """
         height, width = params["shape"][:2]
 
         num_shadows = self.py_random.randint(*self.num_shadows_limit)
@@ -1745,19 +1525,6 @@ class RandomToneCurve(ImageOnlyTransform):
         num_channels: int,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the tone curve to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the tone curve to.
-            low_y (float | np.ndarray): The lower control point of the tone curve.
-            high_y (float | np.ndarray): The upper control point of the tone curve.
-            num_channels (int): The number of channels in the input image.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied tone curve.
-
-        """
         return fpixel.move_tone_curve(img, low_y, high_y, num_channels)
 
     def apply_to_images(
@@ -1768,43 +1535,7 @@ class RandomToneCurve(ImageOnlyTransform):
         num_channels: int,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the tone curve to the input volume.
-
-        Args:
-            images (np.ndarray): The input images to apply the tone curve to.
-            low_y (float | np.ndarray): The lower control point of the tone curve.
-            high_y (float | np.ndarray): The upper control point of the tone curve.
-            num_channels (int): The number of channels in the input images.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The images with the applied tone curve.
-
-        """
         return fpixel.move_tone_curve(images, low_y, high_y, num_channels)
-
-    def apply_to_volume(
-        self,
-        volume: np.ndarray,
-        low_y: float | np.ndarray,
-        high_y: float | np.ndarray,
-        num_channels: int,
-        **params: Any,
-    ) -> np.ndarray:
-        """Apply the tone curve to the input volume.
-
-        Args:
-            volume (np.ndarray): The input volume to apply the tone curve to.
-            low_y (float | np.ndarray): The lower control point of the tone curve.
-            high_y (float | np.ndarray): The upper control point of the tone curve.
-            num_channels (int): The number of channels in the input volume.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volume with the applied tone curve.
-
-        """
-        return fpixel.move_tone_curve(volume, low_y, high_y, num_channels)
 
     def apply_to_volumes(
         self,
@@ -1814,19 +1545,6 @@ class RandomToneCurve(ImageOnlyTransform):
         num_channels: int,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the tone curve to the input volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the tone curve to.
-            low_y (float | np.ndarray): The lower control point of the tone curve.
-            high_y (float | np.ndarray): The upper control point of the tone curve.
-            num_channels (int): The number of channels in the input volume.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volumes with the applied tone curve.
-
-        """
         return fpixel.move_tone_curve(volumes, low_y, high_y, num_channels)
 
     def get_params_dependent_on_data(
@@ -1834,18 +1552,6 @@ class RandomToneCurve(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following keys:
-                - "low_y" (float | np.ndarray): The lower control point of the tone curve.
-                - "high_y" (float | np.ndarray): The upper control point of the tone curve.
-
-        """
         num_channels = get_image_data(data)["num_channels"]
         result = {
             "num_channels": num_channels,
@@ -1960,34 +1666,12 @@ class HueSaturationValue(ImageOnlyTransform):
         val_shift: int,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the hue, saturation, and value shifts to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the hue, saturation, and value shifts to.
-            hue_shift (int): The hue shift value.
-            sat_shift (int): The saturation shift value.
-            val_shift (int): The value (brightness) shift value.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied hue, saturation, and value shifts.
-
-        """
         if not is_rgb_image(img) and not is_grayscale_image(img):
             msg = "HueSaturationValue transformation expects 1-channel or 3-channel images."
             raise TypeError(msg)
         return fpixel.shift_hsv(img, hue_shift, sat_shift, val_shift)
 
     def get_params(self) -> dict[str, float]:
-        """Generate parameters dependent on the input data.
-
-        Returns:
-            dict[str, float]: Dictionary with the following keys:
-                - "hue_shift" (float): The hue shift value.
-                - "sat_shift" (float): The saturation shift value.
-                - "val_shift" (float): The value (brightness) shift value.
-
-        """
         return {
             "hue_shift": self.py_random.uniform(*self.hue_shift_limit),
             "sat_shift": self.py_random.uniform(*self.sat_shift_limit),
@@ -2081,27 +1765,9 @@ class Solarize(ImageOnlyTransform):
         self.threshold_range = threshold_range
 
     def apply(self, img: np.ndarray, threshold: float, **params: Any) -> np.ndarray:
-        """Apply the solarize effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the solarize effect to.
-            threshold (float): The threshold value.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied solarize effect.
-
-        """
         return fpixel.solarize(img, threshold)
 
     def get_params(self) -> dict[str, float]:
-        """Generate parameters dependent on the input data.
-
-        Returns:
-            dict[str, float]: Dictionary with the following key:
-                - "threshold" (float): The threshold value.
-
-        """
         return {"threshold": self.py_random.uniform(*self.threshold_range)}
 
 
@@ -2204,29 +1870,9 @@ class Posterize(ImageOnlyTransform):
         num_bits: Literal[1, 2, 3, 4, 5, 6, 7] | list[Literal[1, 2, 3, 4, 5, 6, 7]],
         **params: Any,
     ) -> np.ndarray:
-        """Apply the posterize effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the posterize effect to.
-            num_bits (Literal[1, 2, 3, 4, 5, 6, 7] | list[Literal[1, 2, 3, 4, 5, 6, 7]]):
-                The number of bits to keep for each color channel.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied posterize effect.
-
-        """
         return fpixel.posterize(img, num_bits)
 
     def get_params(self) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following key:
-                - "num_bits" (Literal[1, 2, 3, 4, 5, 6, 7] | list[Literal[1, 2, 3, 4, 5, 6, 7]]):
-                    The number of bits to keep for each color channel.
-
-        """
         if isinstance(self.num_bits, list):
             num_bits = [self.py_random.randint(*i) for i in self.num_bits]
             return {"num_bits": num_bits}
@@ -2336,17 +1982,6 @@ class Equalize(ImageOnlyTransform):
         self.mask_params = mask_params
 
     def apply(self, img: np.ndarray, mask: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the equalization effect to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the equalization effect to.
-            mask (np.ndarray): The mask to apply the equalization effect to.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied equalization effect.
-
-        """
         if not is_rgb_image(img) and not is_grayscale_image(img):
             raise ValueError("Equalize transform is only supported for RGB and grayscale images.")
         return fpixel.equalize(
@@ -2361,17 +1996,6 @@ class Equalize(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following key:
-                - "mask" (np.ndarray): The mask to apply the equalization effect to.
-
-        """
         if not callable(self.mask):
             return {"mask": self.mask}
 
@@ -2387,12 +2011,6 @@ class Equalize(ImageOnlyTransform):
 
     @property
     def targets_as_params(self) -> list[str]:
-        """Return the list of parameters that are used for generating the mask.
-
-        Returns:
-            list[str]: List of parameter names.
-
-        """
         return [*list(self.mask_params)]
 
 
@@ -2515,79 +2133,19 @@ class RandomBrightnessContrast(ImageOnlyTransform):
         beta: float,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the brightness and contrast adjustment to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the brightness and contrast adjustment to.
-            alpha (float): The contrast adjustment factor.
-            beta (float): The brightness adjustment factor.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied brightness and contrast adjustment.
-
-        """
         return albucore.multiply_add(img, alpha, beta, inplace=False)
 
     def apply_to_images(self, images: np.ndarray, *args: Any, **params: Any) -> np.ndarray:
-        """Apply the brightness and contrast adjustment to a batch of images.
-
-        Args:
-            images (np.ndarray): The batch of images to apply the brightness and contrast adjustment to.
-            *args (Any): Additional arguments.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The batch of images with the applied brightness and contrast adjustment.
-
-        """
         return self.apply(images, *args, **params)
 
     def apply_to_volumes(self, volumes: np.ndarray, *args: Any, **params: Any) -> np.ndarray:
-        """Apply the brightness and contrast adjustment to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): The batch of volumes to apply the brightness and contrast adjustment to.
-            *args (Any): Additional arguments.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The batch of volumes with the applied brightness and contrast adjustment.
-
-        """
         return self.apply(volumes, *args, **params)
-
-    def apply_to_volume(self, volume: np.ndarray, *args: Any, **params: Any) -> np.ndarray:
-        """Apply the brightness and contrast adjustment to a single volume.
-
-        Args:
-            volume (np.ndarray): The volume to apply the brightness and contrast adjustment to.
-            *args (Any): Additional arguments.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volume with the applied brightness and contrast adjustment.
-
-        """
-        return self.apply(volume, *args, **params)
 
     def get_params_dependent_on_data(
         self,
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, float]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, float]: Dictionary with the following keys:
-                - "alpha" (float): The contrast adjustment factor.
-                - "beta" (float): The brightness adjustment factor.
-
-        """
         image = data["image"] if "image" in data else data["images"][0]
 
         # Sample initial values
@@ -2690,50 +2248,12 @@ class GaussNoise(ImageOnlyTransform):
         noise_map: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the Gaussian noise to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the Gaussian noise to.
-            noise_map (np.ndarray): The noise map to apply to the image.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied Gaussian noise.
-
-        """
         return fpixel.add_noise(img, noise_map)
 
     def apply_to_images(self, images: np.ndarray, noise_map: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the Gaussian noise to a batch of images.
-
-        Args:
-            images (np.ndarray): The batch of images to apply the Gaussian noise to.
-            noise_map (np.ndarray): The noise map to apply to the images.
-            **params (Any): Additional parameters (not used in this transform).
-
-        """
         return fpixel.add_noise(images, noise_map)
 
-    def apply_to_volume(self, volume: np.ndarray, noise_map: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the Gaussian noise to a single volume.
-
-        Args:
-            volume (np.ndarray): The volume to apply the Gaussian noise to.
-            noise_map (np.ndarray): The noise map to apply to the volume.
-            **params (Any): Additional parameters (not used in this transform).
-
-        """
-        return fpixel.add_noise(volume, noise_map)
-
     def apply_to_volumes(self, volumes: np.ndarray, noise_map: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the Gaussian noise to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): The batch of volumes to apply the Gaussian noise to.
-            noise_map (np.ndarray): The noise map to apply to the volumes.
-            **params (Any): Additional parameters (not used in this transform).
-
-        """
         return fpixel.add_noise(volumes, noise_map)
 
     def get_params_dependent_on_data(
@@ -2741,17 +2261,6 @@ class GaussNoise(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, float]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, float]: Dictionary with the following key:
-                - "noise_map" (np.ndarray): The noise map to apply to the image.
-
-        """
         metadata = get_image_data(data)
         max_value = MAX_VALUES_BY_DTYPE[metadata["dtype"]]
         shape = (metadata["height"], metadata["width"], metadata["num_channels"])
@@ -2850,19 +2359,6 @@ class ISONoise(ImageOnlyTransform):
         random_seed: int,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the ISONoise transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ISONoise transform to.
-            color_shift (float): The color shift value.
-            intensity (float): The intensity value.
-            random_seed (int): The random seed.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied ISONoise transform.
-
-        """
         non_rgb_error(img)
         return fpixel.iso_noise(
             img,
@@ -2876,19 +2372,6 @@ class ISONoise(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following keys:
-                - "color_shift" (float): The color shift value.
-                - "intensity" (float): The intensity value.
-                - "random_seed" (int): The random seed.
-
-        """
         random_seed = self.random_generator.integers(0, 2**32 - 1)
         return {
             "color_shift": self.py_random.uniform(*self.color_shift),
@@ -2965,17 +2448,6 @@ class CLAHE(ImageOnlyTransform):
         self.tile_grid_size = tile_grid_size
 
     def apply(self, img: np.ndarray, clip_limit: float, **params: Any) -> np.ndarray:
-        """Apply the CLAHE transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the CLAHE transform to.
-            clip_limit (float): The contrast enhancement limit.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied CLAHE transform.
-
-        """
         if not is_rgb_image(img) and not is_grayscale_image(img):
             msg = "CLAHE transformation expects 1-channel or 3-channel images."
             raise TypeError(msg)
@@ -2983,13 +2455,6 @@ class CLAHE(ImageOnlyTransform):
         return fpixel.clahe(img, clip_limit, self.tile_grid_size)
 
     def get_params(self) -> dict[str, float]:
-        """Generate parameters dependent on the input data.
-
-        Returns:
-            dict[str, float]: Dictionary with the following key:
-                - "clip_limit" (float): The contrast enhancement limit.
-
-        """
         return {"clip_limit": self.py_random.uniform(*self.clip_limit)}
 
 
@@ -3039,83 +2504,25 @@ class ChannelShuffle(ImageOnlyTransform):
         channels_shuffled: list[int] | None,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the ChannelShuffle transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ChannelShuffle transform to.
-            channels_shuffled (list[int] | None): The channels to shuffle.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied ChannelShuffle transform.
-
-        """
         if channels_shuffled is None:
             return img
         return fpixel.channel_shuffle(img, channels_shuffled)
 
     def apply_to_images(self, images: np.ndarray, channels_shuffled: list[int] | None, **params: Any) -> np.ndarray:
-        """Apply the ChannelShuffle transform to the input images.
-
-        Args:
-            images (np.ndarray): The input images to apply the ChannelShuffle transform to.
-            channels_shuffled (list[int] | None): The channels to shuffle.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The images with the applied ChannelShuffle transform.
-
-        """
         if channels_shuffled is None:
             return images
         return fpixel.volume_channel_shuffle(images, channels_shuffled)
 
     def apply_to_volumes(self, volumes: np.ndarray, channels_shuffled: list[int] | None, **params: Any) -> np.ndarray:
-        """Apply the ChannelShuffle transform to the input volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the ChannelShuffle transform to.
-            channels_shuffled (list[int] | None): The channels to shuffle.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volumes with the applied ChannelShuffle transform.
-
-        """
         if channels_shuffled is None:
             return volumes
         return fpixel.volumes_channel_shuffle(volumes, channels_shuffled)
-
-    def apply_to_volume(self, volume: np.ndarray, channels_shuffled: list[int] | None, **params: Any) -> np.ndarray:
-        """Apply the ChannelShuffle transform to the input volume.
-
-        Args:
-            volume (np.ndarray): The input volume to apply the ChannelShuffle transform to.
-            channels_shuffled (list[int] | None): The channels to shuffle.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volume with the applied ChannelShuffle transform.
-
-        """
-        return self.apply_to_images(volume, channels_shuffled, **params)
 
     def get_params_dependent_on_data(
         self,
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following key:
-                - "channels_shuffled" (tuple[int, ...] | None): The channels to shuffle.
-
-        """
         shape = params["shape"]
         if len(shape) == 2 or shape[-1] == 1:
             return {"channels_shuffled": None}
@@ -3164,59 +2571,13 @@ class InvertImg(ImageOnlyTransform):
     """
 
     def apply(self, img: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the InvertImg transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the InvertImg transform to.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied InvertImg transform.
-
-        """
         return fpixel.invert(img)
 
     def apply_to_images(self, images: np.ndarray, *args: Any, **params: Any) -> np.ndarray:
-        """Apply the InvertImg transform to the input images.
-
-        Args:
-            images (np.ndarray): The input images to apply the InvertImg transform to.
-            *args (Any): Additional arguments (not used in this transform).
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The images with the applied InvertImg transform.
-
-        """
         return self.apply(images, *args, **params)
 
     def apply_to_volumes(self, volumes: np.ndarray, *args: Any, **params: Any) -> np.ndarray:
-        """Apply the InvertImg transform to the input volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the InvertImg transform to.
-            *args (Any): Additional arguments (not used in this transform).
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volumes with the applied InvertImg transform.
-
-        """
         return self.apply(volumes, *args, **params)
-
-    def apply_to_volume(self, volume: np.ndarray, *args: Any, **params: Any) -> np.ndarray:
-        """Apply the InvertImg transform to the input volume.
-
-        Args:
-            volume (np.ndarray): The input volume to apply the InvertImg transform to.
-            *args (Any): Additional arguments (not used in this transform).
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volume with the applied InvertImg transform.
-
-        """
-        return self.apply(volume, *args, **params)
 
 
 class RandomGamma(ImageOnlyTransform):
@@ -3303,73 +2664,15 @@ class RandomGamma(ImageOnlyTransform):
         self.gamma_limit = cast("tuple[float, float]", gamma_limit)
 
     def apply(self, img: np.ndarray, gamma: float, **params: Any) -> np.ndarray:
-        """Apply the RandomGamma transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the RandomGamma transform to.
-            gamma (float): The gamma value.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied RandomGamma transform.
-
-        """
         return fpixel.gamma_transform(img, gamma=gamma)
 
-    def apply_to_volume(self, volume: np.ndarray, gamma: float, **params: Any) -> np.ndarray:
-        """Apply the RandomGamma transform to the input volume.
-
-        Args:
-            volume (np.ndarray): The input volume to apply the RandomGamma transform to.
-            gamma (float): The gamma value.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volume with the applied RandomGamma transform.
-
-        """
-        return self.apply(volume, gamma=gamma)
-
     def apply_to_volumes(self, volumes: np.ndarray, gamma: float, **params: Any) -> np.ndarray:
-        """Apply the RandomGamma transform to the input volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the RandomGamma transform to.
-            gamma (float): The gamma value.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The volumes with the applied RandomGamma transform.
-
-        """
         return self.apply(volumes, gamma=gamma)
 
     def apply_to_images(self, images: np.ndarray, gamma: float, **params: Any) -> np.ndarray:
-        """Apply the RandomGamma transform to the input images.
-
-        Args:
-            images (np.ndarray): The input images to apply the RandomGamma transform to.
-            gamma (float): The gamma value.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The images with the applied RandomGamma transform.
-
-        """
         return self.apply(images, gamma=gamma)
 
     def get_params_dependent_on_data(self, params: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): Parameters from the previous transform.
-            data (dict[str, Any]): Input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following key:
-                - "gamma" (float): The gamma value.
-
-        """
         return {
             "gamma": self.py_random.uniform(*self.gamma_limit) / 100.0,
         }
@@ -3536,16 +2839,6 @@ class ToGray(ImageOnlyTransform):
         self.method = method
 
     def apply(self, img: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the ToGray transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ToGray transform to.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied ToGray transform.
-
-        """
         if is_grayscale_image(img):
             warnings.warn("The image is already gray.", stacklevel=2)
             return img
@@ -3564,50 +2857,13 @@ class ToGray(ImageOnlyTransform):
         return fpixel.to_gray(img, self.num_output_channels, self.method)
 
     def apply_to_images(self, images: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply ToGray to a batch of images.
-
-        Args:
-            images (np.ndarray): Batch of images with shape (N, H, W, C) or (N, H, W).
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Batch of grayscale images.
-
-        """
         if is_grayscale_image(images, has_batch_dim=True):
             warnings.warn("The image is already gray.", stacklevel=2)
             return images
 
         return fpixel.to_gray(images, self.num_output_channels, self.method)
 
-    def apply_to_volume(self, volume: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply ToGray to a single volume.
-
-        Args:
-            volume (np.ndarray): Volume with shape (D, H, W, C) or (D, H, W).
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Grayscale volume.
-
-        """
-        if is_grayscale_image(volume, has_depth_dim=True):
-            warnings.warn("The volume is already gray.", stacklevel=2)
-            return volume
-
-        return fpixel.to_gray(volume, self.num_output_channels, self.method)
-
     def apply_to_volumes(self, volumes: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply ToGray to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): Batch of volumes with shape (N, D, H, W, C) or (N, D, H, W).
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Batch of grayscale volumes.
-
-        """
         if is_grayscale_image(volumes, has_batch_dim=True, has_depth_dim=True):
             warnings.warn("The volumes are already gray.", stacklevel=2)
             return volumes
@@ -3664,16 +2920,6 @@ class ToRGB(ImageOnlyTransform):
         self.num_output_channels = num_output_channels
 
     def apply(self, img: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the ToRGB transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ToRGB transform to.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied ToRGB transform.
-
-        """
         if is_rgb_image(img):
             warnings.warn("The image is already an RGB.", stacklevel=2)
             return np.ascontiguousarray(img)
@@ -3687,42 +2933,9 @@ class ToRGB(ImageOnlyTransform):
         )
 
     def apply_to_images(self, images: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply ToRGB to a batch of images.
-
-        Args:
-            images (np.ndarray): Batch of images with shape (N, H, W, C) or (N, H, W).
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Batch of RGB images.
-
-        """
         return self.apply(images, **params)
 
-    def apply_to_volume(self, volume: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply ToRGB to a single volume.
-
-        Args:
-            volume (np.ndarray): Volume with shape (D, H, W, C) or (D, H, W).
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Grayscale volume.
-
-        """
-        return self.apply(volume, **params)
-
     def apply_to_volumes(self, volumes: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply ToRGB to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): Batch of volumes with shape (N, D, H, W, C) or (N, D, H, W).
-            **params (Any): Additional parameters.
-
-        Returns:
-            np.ndarray: Batch of RGB volumes.
-
-        """
         return self.apply(volumes, **params)
 
 
@@ -3805,16 +3018,6 @@ class ToSepia(ImageOnlyTransform):
         )
 
     def apply(self, img: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the ToSepia transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ToSepia transform to.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied ToSepia transform.
-
-        """
         if is_grayscale_image(img):
             return img
 
@@ -3941,17 +3144,6 @@ class Downscale(ImageOnlyTransform):
         self.interpolation_pair = interpolation_pair
 
     def apply(self, img: np.ndarray, scale: float, **params: Any) -> np.ndarray:
-        """Apply the Downscale transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the Downscale transform to.
-            scale (float): The downscaling factor.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied Downscale transform.
-
-        """
         return fpixel.downscale(
             img,
             scale=scale,
@@ -3960,13 +3152,6 @@ class Downscale(ImageOnlyTransform):
         )
 
     def get_params(self) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Returns:
-            dict[str, Any]: Dictionary with the following key:
-                - "scale" (float): The downscaling factor.
-
-        """
         return {"scale": self.py_random.uniform(*self.scale_range)}
 
 
@@ -4050,17 +3235,6 @@ class MultiplicativeNoise(ImageOnlyTransform):
         multiplier: float | np.ndarray,
         **kwargs: Any,
     ) -> np.ndarray:
-        """Apply the MultiplicativeNoise transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the MultiplicativeNoise transform to.
-            multiplier (float | np.ndarray): The random multiplier.
-            **kwargs (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied MultiplicativeNoise transform.
-
-        """
         return multiply(img, multiplier)
 
     def get_params_dependent_on_data(
@@ -4068,16 +3242,6 @@ class MultiplicativeNoise(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         image = data["image"] if "image" in data else data["images"][0]
 
         num_channels = get_num_channels(image)
@@ -4167,17 +3331,6 @@ class FancyPCA(ImageOnlyTransform):
         alpha_vector: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the FancyPCA transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the FancyPCA transform to.
-            alpha_vector (np.ndarray): The random noise for each principal component.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied FancyPCA transform.
-
-        """
         return fpixel.fancy_pca(img, alpha_vector)
 
     def get_params_dependent_on_data(
@@ -4185,16 +3338,6 @@ class FancyPCA(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters dependent on the input data.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         shape = params["shape"]
         num_channels = shape[-1] if len(shape) == NUM_MULTI_CHANNEL_DIMENSIONS else 1
         alpha_vector = self.random_generator.normal(0, self.alpha, num_channels).astype(
@@ -4336,12 +3479,6 @@ class ColorJitter(ImageOnlyTransform):
         ]
 
     def get_params(self) -> dict[str, Any]:
-        """Generate parameters for the ColorJitter transform.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         brightness = self.py_random.uniform(*self.brightness)
         contrast = self.py_random.uniform(*self.contrast)
         saturation = self.py_random.uniform(*self.saturation)
@@ -4368,21 +3505,6 @@ class ColorJitter(ImageOnlyTransform):
         order: list[int],
         **params: Any,
     ) -> np.ndarray:
-        """Apply the ColorJitter transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ColorJitter transform to.
-            brightness (float): The brightness factor.
-            contrast (float): The contrast factor.
-            saturation (float): The saturation factor.
-            hue (float): The hue factor.
-            order (list[int]): The order of application for the color transformations.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied ColorJitter transform.
-
-        """
         if not is_rgb_image(img) and not is_grayscale_image(img):
             msg = "ColorJitter transformation expects 1-channel or 3-channel images."
             raise TypeError(msg)
@@ -4544,12 +3666,6 @@ class Sharpen(ImageOnlyTransform):
         return (1 - alpha) * matrix_nochange + alpha * matrix_effect
 
     def get_params(self) -> dict[str, Any]:
-        """Generate parameters for the Sharpen transform.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         alpha = self.py_random.uniform(*self.alpha)
 
         if self.method == "kernel":
@@ -4571,15 +3687,6 @@ class Sharpen(ImageOnlyTransform):
         sharpening_matrix: np.ndarray | None,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the Sharpen transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the Sharpen transform to.
-            alpha (float): The alpha value.
-            sharpening_matrix (np.ndarray | None): The sharpening matrix.
-            **params (Any): Additional parameters for the transform.
-
-        """
         if self.method == "kernel":
             return fpixel.convolve(img, sharpening_matrix)
         return fpixel.sharpen_gaussian(img, alpha, self.kernel_size, self.sigma)
@@ -4668,12 +3775,6 @@ class Emboss(ImageOnlyTransform):
         return (1 - alpha_sample) * matrix_nochange + alpha_sample * matrix_effect
 
     def get_params(self) -> dict[str, np.ndarray]:
-        """Generate parameters for the Emboss transform.
-
-        Returns:
-            dict[str, np.ndarray]: The parameters of the transform.
-
-        """
         alpha = self.py_random.uniform(*self.alpha)
         strength = self.py_random.uniform(*self.strength)
         emboss_matrix = self.__generate_emboss_matrix(
@@ -4688,14 +3789,6 @@ class Emboss(ImageOnlyTransform):
         emboss_matrix: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the Emboss transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the Emboss transform to.
-            emboss_matrix (np.ndarray): The emboss matrix.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return fpixel.convolve(img, emboss_matrix)
 
 
@@ -4826,12 +3919,6 @@ class Superpixels(ImageOnlyTransform):
         self.interpolation = interpolation
 
     def get_params(self) -> dict[str, Any]:
-        """Generate parameters for the Superpixels transform.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         n_segments = self.py_random.randint(*self.n_segments)
         p = self.py_random.uniform(*self.p_replace)
         return {
@@ -4846,18 +3933,6 @@ class Superpixels(ImageOnlyTransform):
         n_segments: int,
         **kwargs: Any,
     ) -> np.ndarray:
-        """Apply the Superpixels transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the Superpixels transform to.
-            replace_samples (Sequence[bool]): Whether to replace pixels in segments.
-            n_segments (int): Number of superpixels.
-            **kwargs (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied Superpixels transform.
-
-        """
         return fpixel.superpixels(
             img,
             n_segments,
@@ -4969,12 +4044,6 @@ class RingingOvershoot(ImageOnlyTransform):
         self.cutoff = cutoff
 
     def get_params(self) -> dict[str, np.ndarray]:
-        """Generate parameters for the RingingOvershoot transform.
-
-        Returns:
-            dict[str, np.ndarray]: The parameters of the transform.
-
-        """
         ksize = self.py_random.randrange(self.blur_limit[0], self.blur_limit[1] + 1, 2)
         if ksize % 2 == 0:
             ksize += 1
@@ -4999,14 +4068,6 @@ class RingingOvershoot(ImageOnlyTransform):
         return {"kernel": kernel}
 
     def apply(self, img: np.ndarray, kernel: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the RingingOvershoot transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the RingingOvershoot transform to.
-            kernel (np.ndarray): The kernel for the convolution.
-            **params (Any): Additional parameters (not used in this transform).
-
-        """
         return fpixel.convolve(img, kernel)
 
 
@@ -5107,12 +4168,6 @@ class UnsharpMask(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters for the UnsharpMask transform.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         return {
             "ksize": self.py_random.randrange(
                 self.blur_limit[0],
@@ -5131,19 +4186,6 @@ class UnsharpMask(ImageOnlyTransform):
         alpha: float,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the UnsharpMask transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the UnsharpMask transform to.
-            ksize (int): The kernel size for the convolution.
-            sigma (int): The standard deviation for the Gaussian blur.
-            alpha (float): The visibility of the sharpened image.
-            **params (Any): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied UnsharpMask transform.
-
-        """
         return fpixel.unsharp_mask(
             img,
             ksize,
@@ -5315,16 +4357,6 @@ class Spatter(ImageOnlyTransform):
         img: np.ndarray,
         **params: dict[str, Any],
     ) -> np.ndarray:
-        """Apply the Spatter transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the Spatter transform to.
-            **params (dict[str, Any]): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied Spatter transform.
-
-        """
         non_rgb_error(img)
 
         if params["mode"] == "rain":
@@ -5337,12 +4369,6 @@ class Spatter(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters for the Spatter transform.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         height, width = params["shape"][:2]
 
         mean = self.py_random.uniform(*self.mean)
@@ -5512,20 +4538,6 @@ class ChromaticAberration(ImageOnlyTransform):
         secondary_distortion_blue: float,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the ChromaticAberration transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ChromaticAberration transform to.
-            primary_distortion_red (float): The primary distortion coefficient for the red channel.
-            secondary_distortion_red (float): The secondary distortion coefficient for the red channel.
-            primary_distortion_blue (float): The primary distortion coefficient for the blue channel.
-            secondary_distortion_blue (float): The secondary distortion coefficient for the blue channel.
-            **params (dict[str, Any]): Additional parameters (not used in this transform).
-
-        Returns:
-            np.ndarray: The image with the applied ChromaticAberration transform.
-
-        """
         non_rgb_error(img)
         return fpixel.chromatic_aberration(
             img,
@@ -5537,12 +4549,6 @@ class ChromaticAberration(ImageOnlyTransform):
         )
 
     def get_params(self) -> dict[str, float]:
-        """Generate parameters for the ChromaticAberration transform.
-
-        Returns:
-            dict[str, float]: The parameters of the transform.
-
-        """
         primary_distortion_red = self.py_random.uniform(*self.primary_distortion_limit)
         secondary_distortion_red = self.py_random.uniform(
             *self.secondary_distortion_limit,
@@ -5760,24 +4766,10 @@ class PlanckianJitter(ImageOnlyTransform):
         self.sampling_method = sampling_method
 
     def apply(self, img: np.ndarray, temperature: int, **params: Any) -> np.ndarray:
-        """Apply the PlanckianJitter transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the PlanckianJitter transform to.
-            temperature (int): The temperature to apply to the image.
-            **params (Any): Additional parameters for the transform.
-
-        """
         non_rgb_error(img)
         return fpixel.planckian_jitter(img, temperature, mode=self.mode)
 
     def get_params(self) -> dict[str, Any]:
-        """Generate parameters for the PlanckianJitter transform.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         sampling_prob_boundary = PLANKIAN_JITTER_CONST["SAMPLING_TEMP_PROB"]
         sampling_temp_boundary = PLANKIAN_JITTER_CONST["WHITE_TEMP"]
 
@@ -5904,24 +4896,9 @@ class ShotNoise(ImageOnlyTransform):
         random_seed: int,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the ShotNoise transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the ShotNoise transform to.
-            scale (float): The scale factor for the noise.
-            random_seed (int): The random seed for the noise.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return fpixel.shot_noise(img, scale, np.random.default_rng(random_seed))
 
     def get_params(self) -> dict[str, Any]:
-        """Generate parameters for the ShotNoise transform.
-
-        Returns:
-            dict[str, Any]: The parameters of the transform.
-
-        """
         return {
             "scale": self.py_random.uniform(*self.scale_range),
             "random_seed": self.random_generator.integers(0, 2**32 - 1),
@@ -5941,7 +4918,7 @@ class UniformParams(NoiseParamsBase):
 
     @field_validator("ranges", mode="after")
     @classmethod
-    def validate_ranges(cls, v: list[Sequence[float]]) -> list[tuple[float, float]]:
+    def _validate_ranges(cls, v: list[Sequence[float]]) -> list[tuple[float, float]]:
         result = []
         for range_values in v:
             if len(range_values) != PAIR:
@@ -6158,14 +5135,6 @@ class AdditiveNoise(ImageOnlyTransform):
         noise_map: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the AdditiveNoise transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the AdditiveNoise transform to.
-            noise_map (np.ndarray): The noise map to apply to the image.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return fpixel.add_noise(img, noise_map)
 
     def get_params_dependent_on_data(
@@ -6173,13 +5142,6 @@ class AdditiveNoise(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters for the AdditiveNoise transform.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        """
         metadata = get_image_data(data)
         max_value = MAX_VALUES_BY_DTYPE[metadata["dtype"]]
         shape = (metadata["height"], metadata["width"], metadata["num_channels"])
@@ -6420,13 +5382,6 @@ class SaltAndPepper(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters for the SaltAndPepper transform.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        """
         height, width = params["shape"][:2]
 
         total_amount = self.py_random.uniform(*self.amount)
@@ -6464,15 +5419,6 @@ class SaltAndPepper(ImageOnlyTransform):
         pepper_mask: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the SaltAndPepper transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the SaltAndPepper transform to.
-            salt_mask (np.ndarray): The salt mask to apply to the image.
-            pepper_mask (np.ndarray): The pepper mask to apply to the image.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return fpixel.apply_salt_and_pepper(img, salt_mask, pepper_mask)
 
 
@@ -6617,13 +5563,6 @@ class PlasmaBrightnessContrast(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters for the PlasmaBrightnessContrast transform.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        """
         shape = params["shape"]
 
         # Sample adjustment strengths
@@ -6651,16 +5590,6 @@ class PlasmaBrightnessContrast(ImageOnlyTransform):
         plasma_pattern: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the PlasmaBrightnessContrast transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the PlasmaBrightnessContrast transform to.
-            brightness_factor (float): The brightness factor to apply to the image.
-            contrast_factor (float): The contrast factor to apply to the image.
-            plasma_pattern (np.ndarray): The plasma pattern to apply to the image.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return fpixel.apply_plasma_brightness_contrast(
             img,
             brightness_factor,
@@ -6670,35 +5599,10 @@ class PlasmaBrightnessContrast(ImageOnlyTransform):
 
     @batch_transform("spatial", keep_depth_dim=False, has_batch_dim=True, has_depth_dim=False)
     def apply_to_images(self, images: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the PlasmaBrightnessContrast transform to a batch of images.
-
-        Args:
-            images (np.ndarray): The input images to apply the PlasmaBrightnessContrast transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(images, **params)
-
-    @batch_transform("spatial", keep_depth_dim=True, has_batch_dim=False, has_depth_dim=True)
-    def apply_to_volume(self, volume: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the PlasmaBrightnessContrast transform to a volume.
-
-        Args:
-            volume (np.ndarray): The input volume to apply the PlasmaBrightnessContrast transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
-        return self.apply(volume, **params)
 
     @batch_transform("spatial", keep_depth_dim=True, has_batch_dim=True, has_depth_dim=True)
     def apply_to_volumes(self, volumes: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the PlasmaBrightnessContrast transform to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the PlasmaBrightnessContrast transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(volumes, **params)
 
 
@@ -6820,13 +5724,6 @@ class PlasmaShadow(ImageOnlyTransform):
         params: dict[str, Any],
         data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Generate parameters for the PlasmaShadow transform.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        """
         shape = params["shape"]
 
         # Sample shadow intensity
@@ -6851,48 +5748,14 @@ class PlasmaShadow(ImageOnlyTransform):
         plasma_pattern: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the PlasmaShadow transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the PlasmaShadow transform to.
-            intensity (float): The intensity of the shadow to apply to the image.
-            plasma_pattern (np.ndarray): The plasma pattern to apply to the image.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return fpixel.apply_plasma_shadow(img, intensity, plasma_pattern)
 
     @batch_transform("spatial", keep_depth_dim=False, has_batch_dim=True, has_depth_dim=False)
     def apply_to_images(self, images: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the PlasmaShadow transform to a batch of images.
-
-        Args:
-            images (np.ndarray): The input images to apply the PlasmaShadow transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(images, **params)
-
-    @batch_transform("spatial", keep_depth_dim=True, has_batch_dim=False, has_depth_dim=True)
-    def apply_to_volume(self, volume: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the PlasmaShadow transform to a batch of volume.
-
-        Args:
-            volume (np.ndarray): The input volume to apply the PlasmaShadow transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
-        return self.apply(volume, **params)
 
     @batch_transform("spatial", keep_depth_dim=True, has_batch_dim=True, has_depth_dim=True)
     def apply_to_volumes(self, volumes: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the PlasmaShadow transform to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the PlasmaShadow transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(volumes, **params)
 
 
@@ -7066,13 +5929,6 @@ class Illumination(ImageOnlyTransform):
         self.sigma_range = sigma_range
 
     def get_params_dependent_on_data(self, params: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
-        """Generate parameters for the Illumination transform.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        """
         intensity = self.py_random.uniform(*self.intensity_range)
 
         # Determine if brightening or darkening
@@ -7107,13 +5963,6 @@ class Illumination(ImageOnlyTransform):
         }
 
     def apply(self, img: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the Illumination transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the Illumination transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         if self.mode == "linear":
             return fpixel.apply_linear_illumination(
                 img,
@@ -7206,46 +6055,14 @@ class AutoContrast(ImageOnlyTransform):
         self.method = method
 
     def apply(self, img: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the AutoContrast transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the AutoContrast transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return fpixel.auto_contrast(img, self.cutoff, self.ignore, self.method)
 
     @batch_transform("channel", has_batch_dim=True, has_depth_dim=False)
     def apply_to_images(self, images: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the AutoContrast transform to a batch of images.
-
-        Args:
-            images (np.ndarray): The input images to apply the AutoContrast transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(images, **params)
-
-    @batch_transform("channel", has_batch_dim=False, has_depth_dim=True)
-    def apply_to_volume(self, volume: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the AutoContrast transform to a batch of volumes.
-
-        Args:
-            volume (np.ndarray): The input volume to apply the AutoContrast transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
-        return self.apply(volume, **params)
 
     @batch_transform("channel", has_batch_dim=True, has_depth_dim=True)
     def apply_to_volumes(self, volumes: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the AutoContrast transform to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the AutoContrast transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(volumes, **params)
 
 
@@ -7470,16 +6287,6 @@ class HEStain(ImageOnlyTransform):
         shift_values: np.ndarray,
         **params: Any,
     ) -> np.ndarray:
-        """Apply the HEStain transform to the input image.
-
-        Args:
-            img (np.ndarray): The input image to apply the HEStain transform to.
-            stain_matrix (np.ndarray): The stain matrix to use for the transform.
-            scale_factors (np.ndarray): The scale factors to use for the transform.
-            shift_values (np.ndarray): The shift values to use for the transform.
-            **params (Any): Additional parameters for the transform.
-
-        """
         non_rgb_error(img)
         return fpixel.apply_he_stain_augmentation(
             img=img,
@@ -7491,45 +6298,13 @@ class HEStain(ImageOnlyTransform):
 
     @batch_transform("channel", has_batch_dim=True, has_depth_dim=False)
     def apply_to_images(self, images: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the HEStain transform to a batch of images.
-
-        Args:
-            images (np.ndarray): The input images to apply the HEStain transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(images, **params)
-
-    @batch_transform("channel", has_batch_dim=False, has_depth_dim=True)
-    def apply_to_volume(self, volume: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the HEStain transform to a batch of volumes.
-
-        Args:
-            volume (np.ndarray): The input volumes to apply the HEStain transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
-        return self.apply(volume, **params)
 
     @batch_transform("channel", has_batch_dim=True, has_depth_dim=True)
     def apply_to_volumes(self, volumes: np.ndarray, **params: Any) -> np.ndarray:
-        """Apply the HEStain transform to a batch of volumes.
-
-        Args:
-            volumes (np.ndarray): The input volumes to apply the HEStain transform to.
-            **params (Any): Additional parameters for the transform.
-
-        """
         return self.apply(volumes, **params)
 
     def get_params_dependent_on_data(self, params: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
-        """Generate parameters for the HEStain transform.
-
-        Args:
-            params (dict[str, Any]): The parameters of the transform.
-            data (dict[str, Any]): The data to apply the transform to.
-
-        """
         # Get stain matrix
         image = data["image"] if "image" in data else data["images"][0]
 
