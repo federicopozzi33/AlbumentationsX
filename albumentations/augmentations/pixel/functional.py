@@ -429,28 +429,25 @@ def linear_transformation_rgb(
         ValueError: If input shapes do not conform to the supported configurations.
 
     """
-    original_shape = img.shape
-
     if img.ndim == 3:
         if transformation_matrix.shape != (3, 3):
             if transformation_matrix.shape == (1, 3, 3):
                 transformation_matrix = transformation_matrix[0]
             else:
                 raise ValueError("For a single image, transformation_matrix must be (3, 3) or (1, 3, 3).")
-        # transformed = cv2.transform(img, transformation_matrix)
-        transformed = img.reshape(-1, 3) @ transformation_matrix.T
-    else:
-        B, H, W, C = img.shape
-        if transformation_matrix.shape in {(3, 3), (B, 3, 3), (1, 3, 3)}:
-            transformation_matrix = np.broadcast_to(transformation_matrix, (B, 3, 3))
-        else:
-            raise ValueError(
-                f"Expected transformation_matrix shape (3, 3) or ({B}, 3, 3), got {transformation_matrix.shape}.",
-            )
-        # transformed = np.stack([cv2.transform(s, transformation_matrix) for s in img])
-        transformed = np.matmul(img.reshape(B, -1, 3), transformation_matrix.transpose(0, 2, 1))
+        return cv2.transform(img, transformation_matrix)
 
-    return transformed.reshape(*original_shape)
+    batch, height, width, channels = img.shape
+    if transformation_matrix.shape in {(3, 3), (1, 3, 3)}:
+        if transformation_matrix.shape == (1, 3, 3):
+            transformation_matrix = transformation_matrix[0]
+        transformed = cv2.transform(img.reshape(batch * height, width, channels), transformation_matrix)
+        return transformed.reshape(batch, height, width, channels)
+    if transformation_matrix.shape == (batch, 3, 3):
+        return np.stack([cv2.transform(img[idx], transformation_matrix[idx]) for idx in range(batch)])
+    raise ValueError(
+        f"Expected transformation_matrix shape (3, 3) or ({batch}, 3, 3), got {transformation_matrix.shape}.",
+    )
 
 
 @uint8_io

@@ -3455,3 +3455,11 @@ def test_linear_transformation_rgb_channel_swap(img: np.ndarray, M: np.ndarray):
 
     expected = img[..., [2, 1, 0]]
     np.testing.assert_array_equal(actual, expected)
+
+@pytest.mark.parametrize("img,M", (
+    (np.ones((10, 10, 3), np.uint8), np.random.randn(3, 3, 3)),
+    (np.ones((3, 10, 10, 3), np.uint8), np.random.randn(2, 3, 3))
+))
+def test_invalid_input(img: np.ndarray, M: np.ndarray):
+    with pytest.raises(ValueError):
+        fpixel.linear_transformation_rgb(img, M)
