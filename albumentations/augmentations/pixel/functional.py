@@ -420,7 +420,7 @@ def linear_transformation_rgb(
 
     Args:
         img (np.ndarray): A single RGB image of shape (H, W, 3), or a batch of images (B, H, W, 3).
-        transformation_matrix (np.ndarray): A 3x3 matrix or a batch of matrices of shape (B, 3, 3).
+        transformation_matrix (np.ndarray): A 3x3 matrix or a batch of matrices of shape (1, 3, 3) or (B, 3, 3).
 
     Returns:
         np.ndarray: Transformed image or batch of images, matching the input shape and dtype.
@@ -446,7 +446,7 @@ def linear_transformation_rgb(
     if transformation_matrix.shape == (batch, 3, 3):
         return np.stack([cv2.transform(img[idx], transformation_matrix[idx]) for idx in range(batch)])
     raise ValueError(
-        f"Expected transformation_matrix shape (3, 3) or ({batch}, 3, 3), got {transformation_matrix.shape}.",
+        f"Expected transformation_matrix shape (3, 3), (1, 3, 3) or ({batch}, 3, 3), got {transformation_matrix.shape}",
     )
 
 
