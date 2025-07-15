@@ -413,20 +413,41 @@ def linear_transformation_rgb(
     img: np.ndarray,
     transformation_matrix: np.ndarray,
 ) -> np.ndarray:
-    """Apply a linear transformation to the RGB channels of an image.
+    """Apply a linear transformation to the RGB channels of an image or batch of images.
 
-    This function applies a linear transformation matrix to the RGB channels of an image.
-    The transformation matrix is a 3x3 matrix that maps the RGB values to new values.
+    This function applies a 3x3 linear transformation matrix (or batch of matrices)
+    to the RGB channels of either a single image or a batch of images.
 
     Args:
-        img (np.ndarray): Input image. Can be grayscale (2D array) or RGB (3D array).
-        transformation_matrix (np.ndarray): 3x3 transformation matrix.
+        img (np.ndarray): A single RGB image of shape (H, W, 3), or a batch of images (B, H, W, 3).
+        transformation_matrix (np.ndarray): A 3x3 matrix or a batch of matrices of shape (1, 3, 3) or (B, 3, 3).
 
     Returns:
-        np.ndarray: Image with the linear transformation applied. The output has the same dtype as the input.
+        np.ndarray: Transformed image or batch of images, matching the input shape and dtype.
+
+    Raises:
+        ValueError: If input shapes do not conform to the supported configurations.
 
     """
-    return cv2.transform(img, transformation_matrix)
+    if img.ndim == 3:
+        if transformation_matrix.shape != (3, 3):
+            if transformation_matrix.shape == (1, 3, 3):
+                transformation_matrix = transformation_matrix[0]
+            else:
+                raise ValueError("For a single image, transformation_matrix must be (3, 3) or (1, 3, 3).")
+        return cv2.transform(img, transformation_matrix)
+
+    batch, height, width, channels = img.shape
+    if transformation_matrix.shape in {(3, 3), (1, 3, 3)}:
+        if transformation_matrix.shape == (1, 3, 3):
+            transformation_matrix = transformation_matrix[0]
+        transformed = cv2.transform(img.reshape(batch * height, width, channels), transformation_matrix)
+        return transformed.reshape(batch, height, width, channels)
+    if transformation_matrix.shape == (batch, 3, 3):
+        return np.stack([cv2.transform(img[idx], transformation_matrix[idx]) for idx in range(batch)])
+    raise ValueError(
+        f"Expected transformation_matrix shape (3, 3), (1, 3, 3) or ({batch}, 3, 3), got {transformation_matrix.shape}",
+    )
 
 
 @uint8_io
