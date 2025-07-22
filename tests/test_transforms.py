@@ -437,11 +437,14 @@ def test_batched_multiplicative_noise(images: np.ndarray):
     actual = aug.apply_to_images(images, m)
 
     assert actual.shape == images.shape
-    for act, original in zip(actual, images):
-        expected = aug(image=original)["image"]
 
-        assert not np.array_equal(original, expected)
-        np.testing.assert_allclose(act, expected)
+    expected = aug(image=images[0])["image"]
+    assert not np.array_equal(images[0], expected)
+    np.testing.assert_allclose(actual[0], expected)
+
+    expected = aug(image=images[1])["image"]
+    assert not np.array_equal(images[1], expected)
+    np.testing.assert_allclose(actual[1], expected)
 
 
 @pytest.mark.parametrize(
