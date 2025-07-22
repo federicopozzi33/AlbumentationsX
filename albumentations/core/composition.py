@@ -1671,13 +1671,23 @@ class ReplayCompose(Compose):
     transformations to different data.
 
     Args:
-        transforms (TransformsSeqType): List of transformations to compose.
-        bbox_params (dict[str, Any] | BboxParams | None): Parameters for bounding box transforms.
-        keypoint_params (dict[str, Any] | KeypointParams | None): Parameters for keypoint transforms.
-        additional_targets (dict[str, str] | None): Dictionary of additional targets.
-        p (float): Probability of applying the compose.
-        is_check_shapes (bool): Whether to check shapes of different targets.
-        save_key (str): Key for storing the applied transformations.
+        transforms (TransformsSeqType):
+            List of transformations to compose.
+        bbox_params (dict[str, Any] | BboxParams | None):
+            Parameters for bounding box transforms.
+        keypoint_params (dict[str, Any] | KeypointParams | None):
+            Parameters for keypoint transforms.
+        additional_targets (dict[str, str] | None):
+            Dictionary of additional targets.
+        p (float):
+            Probability of applying the compose.
+        is_check_shapes (bool):
+            Whether to check shapes of different targets.
+        save_key (str):
+            Key for storing the applied transformations.
+        seed (int | None):
+            Controls reproducibility of random augmentations.
+            See superclass documentation for further information.
 
     """
 
@@ -1690,8 +1700,9 @@ class ReplayCompose(Compose):
         p: float = 1.0,
         is_check_shapes: bool = True,
         save_key: str = "replay",
+        seed: int | None = None,
     ):
-        super().__init__(transforms, bbox_params, keypoint_params, additional_targets, p, is_check_shapes)
+        super().__init__(transforms, bbox_params, keypoint_params, additional_targets, p, is_check_shapes, seed=seed)
         self.set_deterministic(True, save_key=save_key)
         self.save_key = save_key
         self._available_keys.add(save_key)
