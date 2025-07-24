@@ -3236,6 +3236,9 @@ class MultiplicativeNoise(ImageOnlyTransform):
     ) -> np.ndarray:
         return multiply(img, multiplier)
 
+    def apply_to_images(self, images: np.ndarray, multiplier: float | np.ndarray, **kwargs: Any) -> np.ndarray:
+        return self.apply(images, multiplier, **kwargs)
+
     def get_params_dependent_on_data(
         self,
         params: dict[str, Any],
