@@ -424,6 +424,28 @@ def test_crop_non_empty_mask():
     _test_crop(mask_6, crop_6, aug_6, n=10)
     _test_crops(np.stack([mask_2, mask_1]), np.stack([crop_2, crop_1]), aug_1, n=1)
 
+@pytest.mark.parametrize("images", [
+    cv2.randu(np.zeros((2, 256, 320, 1), dtype=np.uint8), 0, 255),
+    cv2.randu(np.zeros((2, 256, 320, 1), dtype=np.float32), 0, 1),
+    cv2.randu(np.zeros((2, 256, 320, 3), dtype=np.uint8), 0, 255),
+    cv2.randu(np.zeros((2, 256, 320, 3), dtype=np.float32), 0, 1),
+])
+def test_batched_multiplicative_noise(images: np.ndarray):
+    m = 0.5
+    aug = A.MultiplicativeNoise((m, m), p=1)
+
+    actual = aug.apply_to_images(images, m)
+
+    assert actual.shape == images.shape
+
+    expected = aug(image=images[0])["image"]
+    assert not np.array_equal(images[0], expected)
+    np.testing.assert_allclose(actual[0], expected)
+
+    expected = aug(image=images[1])["image"]
+    assert not np.array_equal(images[1], expected)
+    np.testing.assert_allclose(actual[1], expected)
+
 
 @pytest.mark.parametrize(
     "image",
