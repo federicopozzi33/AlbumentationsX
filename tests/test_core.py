@@ -254,6 +254,22 @@ def test_deterministic_sequential() -> None:
         assert np.array_equal(data["image"], data2["image"])
 
 
+def test_replay_compose_reproducibility():
+    image = (np.random.random((8, 8)) * 255).astype(np.uint8)
+    aug1 = A.ReplayCompose([A.MultiplicativeNoise((0.7, 1.3)), A.HorizontalFlip(p=0.5)], seed=137)
+    actual1 = aug1(image=image)["image"]
+
+    aug2 = A.ReplayCompose([A.MultiplicativeNoise((0.7, 1.3)), A.HorizontalFlip(p=0.5)], seed=137)
+    actual2 = aug2(image=image)["image"]
+
+    np.testing.assert_allclose(actual1, actual2)
+
+    aug3 = A.ReplayCompose([A.MultiplicativeNoise((0.7, 1.3)), A.HorizontalFlip(p=0.5)], seed=17)
+    actual3 = aug3(image=image)["image"]
+
+    assert not np.array_equal(actual1, actual3)
+
+
 def test_named_args():
     image = np.empty([100, 100, 3], dtype=np.uint8)
     aug = A.HorizontalFlip(p=1)
