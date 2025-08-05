@@ -7,7 +7,9 @@ bounding boxes and keypoints.
 
 from __future__ import annotations
 
+import importlib
 import math
+import os
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal, cast
@@ -217,8 +219,49 @@ def keypoints_d4(
     raise ValueError(f"Invalid group member: {group_member}")
 
 
+def _get_resize_backend() -> str:
+    def can_import(library_name: str) -> bool:
+        try:
+            return importlib.import_module(library_name) is not None
+        except ImportError:
+            return False
+
+    env_backend = os.environ.get("ALBUMENTATIONS_RESIZE", default="opencv").lower()
+    if env_backend == "pyvips" and can_import("pyvips"):
+        return env_backend
+    return "opencv"
+
+
 @preserve_channel_dim
 def resize(
+    img: np.ndarray,
+    target_shape: tuple[int, int],
+    interpolation: int,
+) -> np.ndarray:
+    """Resize an image to the specified target shape using the backend
+    chosen via the ALBUMENTATIONS_RESIZE environment variable.
+
+    Args:
+        img (np.ndarray): Input image.
+        target_shape (tuple[int, int]): Target (height, width) dimensions.
+        interpolation (int): Interpolation method.
+
+    Returns:
+        np.ndarray: Resized image with shape target_shape + original channel dimensions.
+
+    Raises:
+        NotImplementedError: If the selected backend is not supported.
+
+    """
+    backend = _get_resize_backend()
+    if backend == "opencv":
+        return resize_cv2(img, target_shape, interpolation)
+
+    raise NotImplementedError(f"The provided backend '{backend}' is not supported yet.")
+
+
+@preserve_channel_dim
+def resize_cv2(
     img: np.ndarray,
     target_shape: tuple[int, int],
     interpolation: int,
