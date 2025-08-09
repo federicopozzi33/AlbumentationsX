@@ -256,11 +256,64 @@ def resize(
     backend = _get_resize_backend()
     if backend == "opencv":
         return resize_cv2(img, target_shape, interpolation)
+    if backend == "pyvips":
+        return resize_pyvips(img, target_shape, interpolation)
 
     raise NotImplementedError(f"The provided backend '{backend}' is not supported yet.")
 
 
-@preserve_channel_dim
+def resize_pyvips(
+    img: np.ndarray,
+    target_shape: tuple[int, int],
+    interpolation: int = 1,
+) -> np.ndarray:
+    """Resize an image to the specified dimensions.
+
+    This function resizes an input image to the target shape using the specified
+    interpolation method. If the image is already the target size, it is returned unchanged.
+
+    Args:
+        img (np.ndarray): The input image as a NumPy array.
+        target_shape (tuple[int, int]): The desired output shape (height, width).
+        interpolation (int): The interpolation method to use.
+            0: Nearest-neighbor
+            1: Bilinear
+            2: Bicubic
+
+    Returns:
+        np.ndarray: The resized image as a NumPy array with the original dtype.
+
+    """
+    # At this stage, the library's installation and importability have already been verified.
+    import pyvips
+
+    height, width = img.shape[:2]
+    target_height, target_width = target_shape
+    original_dtype = img.dtype
+
+    img_vips = pyvips.Image.new_from_array(img)
+
+    scale_x = target_width / width
+    scale_y = target_height / height
+
+    interpolation_map = {
+        0: pyvips.Kernel.NEAREST,
+        1: pyvips.Kernel.LINEAR,
+        2: pyvips.Kernel.CUBIC,
+    }
+    interpolation_method = interpolation_map.get(interpolation)
+    if interpolation_method is None:
+        raise ValueError(f"Unsupported interpolation method: {interpolation}")
+
+    resized_img_vips = img_vips.resize(
+        scale_x,
+        vscale=scale_y,
+        kernel=interpolation_method,
+    )
+
+    return resized_img_vips.numpy().astype(original_dtype)
+
+
 def resize_cv2(
     img: np.ndarray,
     target_shape: tuple[int, int],
