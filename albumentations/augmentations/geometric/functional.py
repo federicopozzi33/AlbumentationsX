@@ -12,6 +12,7 @@ import math
 import os
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from functools import lru_cache
 from typing import Any, Literal, cast
 from warnings import warn
 
@@ -219,15 +220,17 @@ def keypoints_d4(
     raise ValueError(f"Invalid group member: {group_member}")
 
 
-def _get_resize_backend() -> str:
-    def can_import(library_name: str) -> bool:
-        try:
-            return importlib.import_module(library_name) is not None
-        except ImportError:
-            return False
+def _can_import(library_name: str) -> bool:
+    try:
+        return importlib.import_module(library_name) is not None
+    except ImportError:
+        return False
 
+
+@lru_cache(maxsize=1)
+def _get_resize_backend() -> str:
     env_backend = os.environ.get("ALBUMENTATIONS_RESIZE", default="opencv").lower()
-    if env_backend == "pyvips" and can_import("pyvips"):
+    if env_backend == "pyvips" and _can_import("pyvips"):
         return env_backend
     return "opencv"
 
@@ -286,6 +289,9 @@ def resize_pyvips(
     """
     # At this stage, the library's installation and importability have already been verified.
     import pyvips
+
+    if target_shape == img.shape[:2]:
+        return img
 
     height, width = img.shape[:2]
     target_height, target_width = target_shape
